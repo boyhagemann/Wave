@@ -1,0 +1,26 @@
+{
+    "name": "boyhagemann/wave",
+    "description": "A php package to read WAV data",
+    "keywords": [
+        "php",
+        "wave",
+        "riff",
+        "chunk",
+        "waveform",
+        "audio"
+    ],
+    "autoload": {
+        "psr-0": {
+            "BoyHagemann\\Wave\\": ""
+        }
+    },
+    "target-dir": "BoyHagemann/Wave",
+    "require": {
+        "php": ">=5.3.3"
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "0.1",
+        }
+    }
+}
