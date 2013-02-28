@@ -37,7 +37,7 @@ class Wave
      *
      * @var integer+
      */
-    protected $steps = 10000;
+    protected $steps = 100;
     
     /**
      *
