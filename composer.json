@@ -16,11 +16,11 @@
     },
     "target-dir": "BoyHagemann/Wave",
     "require": {
-        "php": ">=5.3.3"
+        "php": ">=5.3.3",        
     },
     "extra": {
         "branch-alias": {
-            "dev-master": "0.1",
+            "dev-master": "0.1"
         }
     }
 }
