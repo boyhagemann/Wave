@@ -1,6 +1,6 @@
 <?php
 
-namespace Boyhagemann\Wave\Chunk;
+namespace BoyHagemann\Wave\Chunk;
 
 /**
  * Description of Data
