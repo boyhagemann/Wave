@@ -48,6 +48,7 @@ $metadata->getBlockSize();
 $metadata->getBitsPerSample();
 $metadata->getExtensionSize();
 $metadata->getExtensionData();
+```
 
 ### Data chunk
 
