@@ -1,6 +1,6 @@
 <?php
 
-namespace BoyhagemannWave\Chunk;
+namespace Boyhagemann\Wave\Chunk;
 
 /**
  *

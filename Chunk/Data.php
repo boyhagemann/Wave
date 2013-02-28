@@ -1,8 +1,8 @@
 <?php
 
-namespace BoyhagemannWave\Chunk;
+namespace Boyhagemann\Wave\Chunk;
 
-use BoyhagemannWave\Channel;
+use Boyhagemann\Wave\Channel;
 
 /**
  * Description of Data
