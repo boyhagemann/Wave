@@ -17,31 +17,31 @@ class Wave
     
     /**
      *
-     * @var integer
+     * @var integer $length
      */
     protected $length;
 
     /**
      *
-     * @var array 
+     * @var array $chunks
      */
     protected $chunks = array();
 
     /**
      *
-     * @var Stream 
+     * @var Stream $fileHandler
      */
     protected $fileHandler;
     
     /**
      *
-     * @var integer+
+     * @var integer $steps;
      */
     protected $steps = 100;
     
     /**
      *
-     * @var integer
+     * @var integer $position
      */
     private $position = 0;
 
@@ -71,6 +71,7 @@ class Wave
      */
     public function getChunks() 
     {
+        $this->analyze();
         return $this->chunks;
     }
 
@@ -172,14 +173,16 @@ class Wave
      */
     public function getLength() 
     {
+        $this->analyze();
         return $this->length;
     }
 
     /**
      * 
      * @throws Exception
+     * @return Wave
      */
-    protected function analyze()
+    public function analyze()
     {
         $fh = $this->getFileHandler();
 
@@ -199,6 +202,8 @@ class Wave
         
         $this->incrementPosition(12);
         $this->readChunkAtCurrentPointer();
+        
+        return $this;
      }
      
      /**
@@ -265,11 +270,11 @@ class Wave
             
             case 'data':
                 
-                $numberOfChannels   = $this->getFmt()->getChannels();
+                $numberOfChannels   = $this->getMetadata()->getChannels();
                 $channels           = $this->createChannels($numberOfChannels);                
                 $chunk              = new Chunk\Data($size);
                 $steps              = $this->getSteps();
-                $blockSize          = $this->getFmt()->getBlockSize();       
+                $blockSize          = $this->getMetadata()->getBlockSize();       
                 $skips              = $steps * $blockSize;
                 
                 while(!feof($fh)) {
@@ -348,7 +353,7 @@ class Wave
       * 
       * @return Chunk\Fmt
       */
-     public function getFmt()
+     public function getMetadata()
      {
          return $this->getChunk(Chunk\Fmt::NAME);
      }
