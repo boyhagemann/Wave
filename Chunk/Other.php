@@ -7,10 +7,8 @@ namespace BoyHagemann\Wave\Chunk;
  *
  * @author boyhagemann
  */
-class Other implements ChunkInterface
+class Other extends ChunkAbstract
 {
-    protected $name;
-    protected $size;
     protected $data;
     
     /**
@@ -27,50 +25,6 @@ class Other implements ChunkInterface
         if($size) {
             $this->setSize($size);
         }
-    }
-
-
-    /**
-     * 
-     * @param string $name
-     * @return \BoyhagemannWave\Chunk\Other
-     */
-    public function setName($name)
-    {
-        $this->name = $name;
-        return $this;
-    }
-
-
-    /**
-     * 
-     * @see BoyhagemannWave\Chunk\ChunkInterface
-     * @return string
-     */
-    public function getName()
-    {
-        return $this->data;
-    }
-    
-    /**
-     * 
-     * @see BoyhagemannWave\Chunk\ChunkInterface
-     * @return integer
-     */
-    public function getSize()
-    {
-        return $this->size;
-    }
-    
-    /**
-     * 
-     * @param integer $size
-     * @return \BoyhagemannWave\Chunk\Other
-     */
-    public function setSize($size) 
-    {
-        $this->size = $size;
-        return $this;
     }
 
     /**

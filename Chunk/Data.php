@@ -9,11 +9,10 @@ use Boyhagemann\Wave\Channel;
  *
  * @author boyhagemann
  */
-class Data implements ChunkInterface
+class Data extends ChunkAbstract
 {
     const NAME = 'data';
     
-    protected $size;
     protected $channels;
     
     /**
@@ -35,27 +34,6 @@ class Data implements ChunkInterface
     public function getName()
     {
         return self::NAME;
-    }
-    
-    /**
-     * 
-     * @see BoyhagemannWave\Chunk\ChunkInterface
-     * @return integer
-     */
-    public function getSize()
-    {
-        return $this->size;
-    }
-
-    /**
-     * 
-     * @param integer $size
-     * @return \BoyhagemannWave\Chunk\Data
-     */
-    public function setSize($size)
-    {
-        $this->size = $size;
-        return $this;
     }
     
     /**
@@ -90,7 +68,6 @@ class Data implements ChunkInterface
         }
         return $this;
     }
-
 
     /**
      * 

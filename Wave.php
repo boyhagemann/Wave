@@ -62,6 +62,10 @@ class Wave
     public function setFilename($filename) 
     {
         $this->filename = $filename;
+        
+        // Read the file, get the chunks
+        $this->read();
+        
         return $this;
     }
 
@@ -71,7 +75,6 @@ class Wave
      */
     public function getChunks() 
     {
-        $this->analyze();
         return $this->chunks;
     }
 
@@ -132,34 +135,6 @@ class Wave
 
     /**
      * 
-     * @return integer
-     */
-    public function getPosition()
-    {
-        return $this->position;
-    }
-
-    /**
-     * 
-     * @param integer $increment
-     */
-    protected function incrementPosition($increment)
-    {
-        $this->position += $increment;
-    }
-
-    /**
-     * 
-     * @return Chunk\Data
-     */
-    public function getWaveformData()
-    {
-        $this->analyze();
-        return $this->getChunk(Chunk\Data::NAME);
-    }
-
-    /**
-     * 
      * @return Waveform
      */
     public function getWaveform()
@@ -173,7 +148,6 @@ class Wave
      */
     public function getLength() 
     {
-        $this->analyze();
         return $this->length;
     }
 
@@ -182,7 +156,7 @@ class Wave
      * @throws Exception
      * @return Wave
      */
-    public function analyze()
+    protected function read()
     {
         $fh = $this->getFileHandler();
 
@@ -191,170 +165,199 @@ class Wave
         if($type !== 'RIFF') {
             throw new Exception(sprintf('Expected type RIFF, but found type "%s"', $type));
         }
-        
+
         $this->length = current(unpack('V', fread($fh, 4)));
-                
+
         // Check if the file is realy a wave file
         $format = fread($fh, 4);
         if($format !== 'WAVE') {
             throw new Exception(sprintf('Expected format "WAVE", but found type "%s"', $format));
         }
-        
-        $this->incrementPosition(12);
-        $this->readChunkAtCurrentPointer();
-        
+
+        $this->readChunks();
+
         return $this;
      }
-     
-     /**
-      * 
-      */
-     protected function readChunkAtCurrentPointer()
-     {
-        $fh = $this->getFileHandler();         
-        
-        $name = fread($fh, 4);
-        $size =  current(unpack('V', fread($fh, 4)));  
-        $this->incrementPosition(8);
-        
-        switch(strtolower($name)) {
-            
-            case Chunk\Fmt::NAME:
-                
-                $chunk = new Chunk\Fmt();
-                
-                if ($size >= 2) {
-                    $format = current(unpack('v', fread($fh, 2)));
-                    $chunk->setFormat($format);
-                    $this->incrementPosition(2);
-                }                
-                if ($size >= 4) {
-                    $channels = current(unpack('v', fread($fh, 2)));
-                    $chunk->setChannels($channels);
-                    $this->incrementPosition(2);
-                }                
-                if ($size >= 8) {
-                    $sampleRate = current(unpack('V', fread($fh, 4)));
-                    $chunk->setSampleRate($sampleRate);
-                    $this->incrementPosition(4);
-                }
-                if ($size >= 12) {
-                    $bytesPerSecond = current(unpack('V', fread($fh, 4)));
-                    $chunk->setBytesPerSecond($bytesPerSecond);
-                    $this->incrementPosition(4);
-                }
-                if ($size >= 14) {
-                    $blockSize = current(unpack('v', fread($fh, 2)));
-                    $chunk->setBlockSize($blockSize);
-                    $this->incrementPosition(2);
-                }
-                if ($size >= 16) {
-                    $bitsPerSample = current(unpack('v', fread($fh, 2)));
-                    $chunk->setBitsPerSample($bitsPerSample);
-                    $this->incrementPosition(2);
-                }
-                if ($size >= 18) {
-                    $extensionSize = current(unpack('v', fread($fh, 2)));
-                    $chunk->setExtensionSize($extensionSize);
-                    $this->incrementPosition(2);
-                }
-                if ($size >= 20) {
-                    $extensionData = fread($fh, $extensionSize);
-                    $chunk->setExtensionData($extensionData);
-                    $this->incrementPosition($extensionSize);
-                }
-                
-                $this->setChunk($chunk);
-                $this->readChunkAtCurrentPointer();                
-                break;
-            
-            case 'data':
-                
-                $numberOfChannels   = $this->getMetadata()->getChannels();
-                $channels           = $this->createChannels($numberOfChannels);                
-                $chunk              = new Chunk\Data($size);
-                $steps              = $this->getSteps();
-                $blockSize          = $this->getMetadata()->getBlockSize();       
-                $skips              = $steps * $blockSize;
-                
-                while(!feof($fh)) {
-                    
-                    foreach($channels as $channel) {
-                        $this->readData($channel);
-                    }    
-                    
-                    fread($fh, $skips);
-                    $this->incrementPosition(2 + $skips);
-                }
-                
-                $chunk->setChannels($channels);
-                $this->setChunk($chunk);
-                break;
-                                
-            default:
-                $chunk = new Chunk\Other($name, $size);
-                $data = fread($fh, $size);
-                $chunk->setData($data);
-                $this->readChunkAtCurrentPointer();
-        }
-     }
-     
-     /**
-      * 
-      * @param integer $numberOfChannels
-      * @return array
-      */
-     public function createChannels($numberOfChannels)
-     {
-         $channels = array();
-         for($i = 0; $i < $numberOfChannels; $i++) {
-             $channels[] = new Channel();
-         }
-         return $channels;
-     }
-     
-     /**
-      * 
-      * @param \BoyhagemannWave\Channel $channel
-      */
-     protected function readData(Channel $channel)
-     {
+
+    /**
+     * 
+     */
+    protected function readChunks()
+    {         
+       $fh = $this->getFileHandler();        
+
+       $name = fread($fh, 4);
+       $size = current(unpack('V', fread($fh, 4))); 
+       $position = ftell($fh);
+
+       fseek($fh, $position + $size);
+
+       switch(strtolower($name)) {
+
+           case Chunk\Fmt::NAME:
+               $chunk = new Chunk\Fmt;
+               break;
+
+           case Chunk\Data::NAME:
+               $chunk = new Chunk\Data;
+               break;
+
+           default:
+               $chunk = new Chunk\Other();
+               $chunk->setName($name);
+               $chunk->setData(fread($fh, $size));
+       }        
+
+       $chunk->setSize($size);
+       $chunk->setPosition($position);
+       $this->setChunk($chunk);
+
+       if(!$chunk instanceof Chunk\Data) {
+           $this->readChunks();
+       }
+    }
+
+    /**
+     * 
+     */
+    protected function analyzeMetadata()
+    {
+        $chunk      = $this->getChunk(Chunk\Fmt::NAME);
+        $size       = $chunk->getSize();
+        $position   = $chunk->getPosition();
         $fh         = $this->getFileHandler();
-        $position   = $this->getPosition();
-        $amplitude  = current(unpack('v', fread($fh, 2)));
-        
-        $channel->setAmplitude($position, $amplitude);
-     }
 
-     /**
-      * 
-      * @param Chunk\ChunkInterface $chunk
-      */
-     public function setChunk(Chunk\ChunkInterface $chunk)
-     {
-         $this->chunks[$chunk->getName()] = $chunk;
-     }
+        fseek($fh, $position);                
 
-     /**
-      * 
-      * @throws Exception
-      * @return Chunk\ChunkInterface
-      */
-     public function getChunk($name)
-     {
-         if(!key_exists($name, $this->chunks)) {
-             throw new Exception(sprintf('No chunk with name "%s" set', $name));
-         }
+        if ($size >= 2) {
+            $format = current(unpack('v', fread($fh, 2)));
+            $chunk->setFormat($format);
+        }                
+        if ($size >= 4) {
+            $channels = current(unpack('v', fread($fh, 2)));
+            $chunk->setChannels($channels);
+        }                
+        if ($size >= 8) {
+            $sampleRate = current(unpack('V', fread($fh, 4)));
+            $chunk->setSampleRate($sampleRate);
+        }
+        if ($size >= 12) {
+            $bytesPerSecond = current(unpack('V', fread($fh, 4)));
+            $chunk->setBytesPerSecond($bytesPerSecond);
+        }
+        if ($size >= 14) {
+            $blockSize = current(unpack('v', fread($fh, 2)));
+            $chunk->setBlockSize($blockSize);
+        }
+        if ($size >= 16) {
+            $bitsPerSample = current(unpack('v', fread($fh, 2)));
+            $chunk->setBitsPerSample($bitsPerSample);
+        }
+        if ($size >= 18) {
+            $extensionSize = current(unpack('v', fread($fh, 2)));
+            $chunk->setExtensionSize($extensionSize);
+        }
+        if ($size >= 20) {
+            $extensionData = fread($fh, $extensionSize);
+            $chunk->setExtensionData($extensionData);
+        }
 
-         return $this->chunks[$name];
-     }
-     
-     /**
-      * 
-      * @return Chunk\Fmt
-      */
-     public function getMetadata()
-     {
-         return $this->getChunk(Chunk\Fmt::NAME);
-     }
+    }
+
+    /**
+     * 
+     */
+    protected function analyzeData()
+    {
+        $chunk              = $this->getChunk(Chunk\Data::NAME);
+        $position           = $chunk->getPosition();
+        $size               = $chunk->getSize();
+        $numberOfChannels   = $this->getMetadata()->getChannels();
+        $channels           = $this->createChannels($numberOfChannels);                
+        $steps              = $this->getSteps();
+        $blockSize          = $this->getMetadata()->getBlockSize();       
+        $skips              = $steps * $blockSize;
+
+        $fh = $this->getFileHandler();
+        fseek($fh, $position);
+
+        while(!feof($fh) && ftell($fh) < $position + $size) {
+
+            foreach($channels as $channel) {
+                $this->readData($channel);
+            }    
+
+            fseek($fh, $skips, SEEK_CUR);
+        }
+
+        $chunk->setChannels($channels);
+    }
+
+    /**
+     * 
+     * @param integer $numberOfChannels
+     * @return array
+     */
+    public function createChannels($numberOfChannels)
+    {
+        $channels = array();
+        for($i = 0; $i < $numberOfChannels; $i++) {
+            $channels[] = new Channel();
+        }
+        return $channels;
+    }
+
+    /**
+     * 
+     * @param \BoyhagemannWave\Channel $channel
+     */
+    protected function readData(Channel $channel)
+    {
+       $fh = $this->getFileHandler();      
+       $amplitude = current(unpack('v', fread($fh, 2)));       
+       $channel->setAmplitude(ftell($fh), $amplitude);
+    }
+
+    /**
+     * 
+     * @param Chunk\ChunkInterface $chunk
+     */
+    public function setChunk(Chunk\ChunkInterface $chunk)
+    {
+        $this->chunks[$chunk->getName()] = $chunk;
+    }
+
+    /**
+     * 
+     * @throws Exception
+     * @return Chunk\ChunkInterface
+     */
+    public function getChunk($name)
+    {
+        if(!key_exists($name, $this->chunks)) {
+            throw new Exception(sprintf('No chunk with name "%s" set', $name));
+        }
+
+        return $this->chunks[$name];
+    }
+
+    /**
+     * 
+     * @return Chunk\Data
+     */
+    public function getWaveformData()
+    {
+        $this->analyzeData();
+        return $this->getChunk(Chunk\Data::NAME);
+    }
+    
+    /**
+     * 
+     * @return Chunk\Fmt
+     */
+    public function getMetadata()
+    {
+       $this->analyzeMetadata();
+       return $this->getChunk(Chunk\Fmt::NAME);
+    }
 }

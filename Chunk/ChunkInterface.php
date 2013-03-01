@@ -10,13 +10,31 @@ interface ChunkInterface
 {
     /**
      * 
-     * return string
+     * @return string
      */
     public function getName();
     
     /**
      * 
-     * return integer
+     * @return integer
+     */
+    public function getPosition();
+    
+    /**
+     * 
+     * @parram integer $position
+     */
+    public function setPosition($position);
+
+    /**
+     * 
+     * @return integer
      */
     public function getSize();
+
+    /**
+     * 
+     * @param integer $size
+     */
+    public function setSize($size);
 }

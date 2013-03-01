@@ -7,11 +7,10 @@ namespace BoyHagemann\Wave\Chunk;
  *
  * @author boyhagemann
  */
-class Fmt implements ChunkInterface
+class Fmt extends ChunkAbstract
 {
     const  NAME = 'fmt ';
-    
-    protected $size;    
+      
     protected $format;
     protected $channels;
     protected $sampleRate;
@@ -31,16 +30,7 @@ class Fmt implements ChunkInterface
         return self::NAME;
     }
     
-    /**
-     * 
-     * @see BoyhagemannWave\Chunk\ChunkInterface
-     * @return integer
-     */
-    public function getSize()
-    {
-        return $this->size;
-    }
-    
+
     public function getFormat() 
     {
         return $this->format;
