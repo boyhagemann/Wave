@@ -3,49 +3,50 @@
 namespace BoyHagemann\Wave;
 
 /**
- * Description of Wave
+ * This class can read the chunks in the wave file and can analyze the
+ * metadata and amplitudes.
  *
  * @author boyhagemann
  */
 class Wave 
 {
     /**
+     * The path to the wave file
      *
      * @var string $filename
      */
     protected $filename;
     
     /**
+     * This is the total size in bytes of the wave file
      *
-     * @var integer $length
+     * @var integer $size
      */
-    protected $length;
+    protected $size;
 
     /**
+     * The chunks detected in the wavefile
      *
      * @var array $chunks
      */
     protected $chunks = array();
 
     /**
+     * Use a filehandler to read the bytes in the wave file
      *
      * @var Stream $fileHandler
      */
     protected $fileHandler;
     
     /**
+     * The number of steps to skip bytes.
      *
      * @var integer $steps;
      */
     protected $steps = 100;
-    
-    /**
-     *
-     * @var integer $position
-     */
-    private $position = 0;
 
     /**
+     * Get the path to the wave file
      * 
      * @return string
      */
@@ -55,6 +56,7 @@ class Wave
     }
 
     /**
+     * Set the path to the wave file
      * 
      * @param string $filename
      * @return Wave
@@ -70,6 +72,7 @@ class Wave
     }
 
     /**
+     * Get the detected chunks in the wave file
      * 
      * @return array
      */
@@ -79,6 +82,7 @@ class Wave
     }
 
     /**
+     * Set the chunk parts
      * 
      * @param array $chunks
      * @return \BoyhagemannWave\Wave
@@ -90,6 +94,8 @@ class Wave
     }
 
     /**
+     * Get the file handler that is used to read the bytes 
+     * in the wave file
      * 
      * @return Stream
      */
@@ -103,6 +109,7 @@ class Wave
     }
 
     /**
+     * Set the file handler to read the wave file byte data
      * 
      * @param \BoyhagemannWave\Stream $fileHandler
      * @return \BoyhagemannWave\Wave
@@ -114,6 +121,7 @@ class Wave
     }
 
     /**
+     * Get the number of steps for skipping when analyzing wave data
      * 
      * @return integer
      */
@@ -123,6 +131,16 @@ class Wave
     }
 
     /**
+     * Set the number of steps for skipping bytes when analyzing wave data
+     * 
+     * The higher the number, the more byte packages are skipped. This result
+     * in a faster analyses, but makes the analyzed data less accurate.
+     * 
+     * The lower the number, the more detailed the analyses is. This can
+     * exceed maximum execution time, so be careful not to set the number
+     * of steps too small.
+     * 
+     * The default number of steps is 100
      * 
      * @param integer $steps
      * @return \BoyhagemannWave\Wave
@@ -134,24 +152,18 @@ class Wave
     }
 
     /**
-     * 
-     * @return Waveform
-     */
-    public function getWaveform()
-    {
-        return new Waveform($this);
-    }
-
-    /**
+     * Get the total size of the wave file in number of bytes
      * 
      * @return integer
      */
-    public function getLength() 
+    public function getSize() 
     {
-        return $this->length;
+        return $this->size;
     }
 
     /**
+     * Read the wave file and detect the chunks. After this, the chunks are
+     * ready to be analyzed to get the metadata en wave data
      * 
      * @throws Exception
      * @return Wave
@@ -166,7 +178,8 @@ class Wave
             throw new Exception(sprintf('Expected type RIFF, but found type "%s"', $type));
         }
 
-        $this->length = current(unpack('V', fread($fh, 4)));
+        // Get the total size of the wave file
+        $this->size = current(unpack('V', fread($fh, 4)));
 
         // Check if the file is realy a wave file
         $format = fread($fh, 4);
@@ -180,6 +193,9 @@ class Wave
      }
 
     /**
+     * Read a single chunk and get its name and size.
+     * 
+     * It creates a chunk object and adds it to the list of detected chunks.
      * 
      */
     protected function readChunks()
@@ -224,6 +240,15 @@ class Wave
     }
 
     /**
+     * Get the metadata from detected 'fmt' chunk. It contains information 
+     * about:
+     * - sample rate
+     * - number of channels
+     * - bits per sample
+     * etc.
+     * 
+     * The metadata is set to a fixed order. The higher the size of the
+     * metadata chunk, the more information is registered.
      * 
      */
     protected function analyzeMetadata()
@@ -271,7 +296,12 @@ class Wave
     }
 
     /**
+     * Get the amplitude data from the data chunk.
      * 
+     * For speed optimalisation, skip some blocks. The number of skips is
+     * based on the step size.
+     * 
+     * @uses Chunk\Data
      */
     protected function analyzeData()
     {
@@ -300,8 +330,13 @@ class Wave
     }
 
     /**
+     * Create a channel object based on the number of channels of the
+     * wave file. 
+     * 
+     * Returns an array containing the channel objects.
      * 
      * @param integer $numberOfChannels
+     * @uses Channel
      * @return array
      */
     public function createChannels($numberOfChannels)
@@ -314,6 +349,7 @@ class Wave
     }
 
     /**
+     * Get the amplitude of a single channel and a single data block
      * 
      * @param \BoyhagemannWave\Channel $channel
      */
@@ -325,6 +361,7 @@ class Wave
     }
 
     /**
+     * Add a chunk object
      * 
      * @param Chunk\ChunkInterface $chunk
      */
@@ -334,6 +371,7 @@ class Wave
     }
 
     /**
+     * Get the chunk object if it exists.
      * 
      * @throws Exception
      * @return Chunk\ChunkInterface
@@ -348,6 +386,9 @@ class Wave
     }
 
     /**
+     * Get the wave data chunk object
+     * 
+     * This method triggers the analyzing of the chunk.
      * 
      * @return Chunk\Data
      */
@@ -358,6 +399,9 @@ class Wave
     }
     
     /**
+     * Get the metadata (fmt) chunk
+     * 
+     * This method triggers the analyzing of the chunk.
      * 
      * @return Chunk\Fmt
      */
