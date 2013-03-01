@@ -29,9 +29,11 @@ $wave->setFilename('path/to/your/file.wav');
 After that, if the file turns out to be a valid wave file, you can
 get several metadata from it.
 
-## Chunks
+## How a wave is made
 
-A wave file is made out of chunks; packages of data. Each chunk has its own name, size and unique data.
+A wave file is made out of chunks; packages of data. 
+Each chunk has its own name, size and unique data.
+We are actually only interested in 2 types of chunk: the Fmt and the Data chunk.
 
 ### Metadata (fmt chunk)
 For instance, the "Fmt" chunk contains a description of the wave file contents. To get this metadata,
