@@ -201,17 +201,23 @@ class Wave
            case Chunk\Data::NAME:
                $chunk = new Chunk\Data;
                break;
+           
+           case 'JUNK':
+               $chunk = false;
 
            default:
                $chunk = new Chunk\Other();
                $chunk->setName($name);
-               $chunk->setData(fread($fh, $size));
        }        
 
-       $chunk->setSize($size);
-       $chunk->setPosition($position);
-       $this->setChunk($chunk);
-
+       // Check if there is a chunk detected
+       if($chunk) {
+        $chunk->setSize($size);
+        $chunk->setPosition($position);
+        $this->setChunk($chunk);
+       }
+       
+       // If the data chunk is found, then stop reading other (useless) chunks
        if(!$chunk instanceof Chunk\Data) {
            $this->readChunks();
        }
