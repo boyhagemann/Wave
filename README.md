@@ -7,7 +7,7 @@ Each channel has its own amplitude values. This is useful if you want to render 
 
 You can install with composer. Use a composer.json file with the following lines:
 
-```
+```json
 "minimum-stability": "dev",
 "require": {
     "boyhagemann/wave": "dev-master"
@@ -17,7 +17,7 @@ You can install with composer. Use a composer.json file with the following lines
 ## How to use
 
 First, let's make a wave object based on a wave file:
-```
+```php
 <?php
 
 use BoyHagemann\Wave\Wave;
@@ -36,7 +36,7 @@ A wave file is made out of chunks; packages of data. Each chunk has its own name
 ### Metadata (fmt chunk)
 For instance, the "Fmt" chunk contains a description of the wave file contents. To get this metadata,
 you can enter these lines:
-```
+```php
 $metadata = $wave->analyze()->getMetadata();
 $metadata->getName();
 $metadata->getSize();
@@ -55,7 +55,7 @@ $metadata->getExtensionData();
 This chunk contains all the actual wave data. It is build up in packages of several bytes, depending on the
 number of channels the wave has. All analyzed data is stored in seperate channels, depending on the number of
 channels of the file. To get the raw amplitudes of a file, do the following:
-```
+```php
 // Assuming we already analyzed the wave...
 $data = $wave->getWaveformData();
 
@@ -74,6 +74,6 @@ You can set the number of steps between the packages that are to be analyzed.
 The greater the steps, the faster the script will run. 
 The smaller the steps, the more accurate the waveform will be.
 By default, the steps are set to 100, but you can alter this easily:
-```
+```php
 $wave->setSteps(10000);
 ```
