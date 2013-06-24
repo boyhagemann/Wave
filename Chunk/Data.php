@@ -42,7 +42,7 @@ class Data extends ChunkAbstract
      */
     public function getChannels()
     {
-        return $this->data;
+        return $this->channels;
     }
     
     /**
