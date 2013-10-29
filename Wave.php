@@ -217,9 +217,6 @@ class Wave
            case Chunk\Data::NAME:
                $chunk = new Chunk\Data;
                break;
-           
-           case 'JUNK':
-               $chunk = false;
 
            default:
                $chunk = new Chunk\Other();
@@ -311,8 +308,8 @@ class Wave
         $numberOfChannels   = $this->getMetadata()->getChannels();
         $channels           = $this->createChannels($numberOfChannels);                
         $steps              = $this->getSteps();
-        $blockSize          = $this->getMetadata()->getBlockSize();       
-        $skips              = $steps * $blockSize;
+        $blockSize          = $this->getMetadata()->getBlockSize();
+        $skips              = $steps * $numberOfChannels * 2;
 
         $fh = $this->getFileHandler();
         fseek($fh, $position);
@@ -355,8 +352,8 @@ class Wave
      */
     protected function readData(Channel $channel)
     {
-       $fh = $this->getFileHandler();      
-       $amplitude = current(unpack('v', fread($fh, 2)));       
+       $fh = $this->getFileHandler();
+	   $amplitude = current(unpack('V', fread($fh, 4)));
        $channel->setAmplitude(ftell($fh), $amplitude);
     }
 
