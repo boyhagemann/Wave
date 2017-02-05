@@ -39,7 +39,7 @@ We are actually only interested in 2 types of chunk: the Fmt and the Data chunk.
 For instance, the "Fmt" chunk contains a description of the wave file contents. To get this metadata,
 you can enter these lines:
 ```php
-$metadata = $wave->analyze()->getMetadata();
+$metadata = $wave->getMetadata();
 $metadata->getName();
 $metadata->getSize();
 $metadata->getFormat();
