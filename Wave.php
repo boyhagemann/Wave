@@ -302,14 +302,15 @@ class Wave
      */
     protected function analyzeData()
     {
+        $metadata           = $this->getMetadata();
         $chunk              = $this->getChunk(Chunk\Data::NAME);
         $position           = $chunk->getPosition();
         $size               = $chunk->getSize();
-        $numberOfChannels   = $this->getMetadata()->getChannels();
-        $channels           = $this->createChannels($numberOfChannels);                
+        $numberOfChannels   = $metadata->getChannels();
+        $channels           = $this->createChannels($numberOfChannels);
         $steps              = $this->getSteps();
-        $blockSize          = $this->getMetadata()->getBlockSize();
-        $skips              = $steps * $numberOfChannels * 2;
+        $bitsPerSample      = $metadata->getBitsPerSample();
+        $skips              = $steps * $numberOfChannels * ($bitsPerSample / 8);
 
         $fh = $this->getFileHandler();
         fseek($fh, $position);
@@ -317,8 +318,8 @@ class Wave
         while(!feof($fh) && ftell($fh) < $position + $size) {
 
             foreach($channels as $channel) {
-                $this->readData($channel);
-            }    
+                $this->readData($channel, $bitsPerSample);
+            }
 
             fseek($fh, $skips, SEEK_CUR);
         }
@@ -350,11 +351,28 @@ class Wave
      * 
      * @param \BoyhagemannWave\Channel $channel
      */
-    protected function readData(Channel $channel)
+    protected function readData(Channel $channel, $bitsPerSample)
     {
-       $fh = $this->getFileHandler();
-	   $amplitude = current(unpack('V', fread($fh, 4)));
-       $channel->setAmplitude(ftell($fh), $amplitude);
+        $fh = $this->getFileHandler();
+
+        switch ($bitsPerSample) {
+            case 32:
+                $amplitude = current(unpack('V', fread($fh, 4)));
+                break;
+            case 24:
+                $amplitude = current(unpack('V', "\0" . fread($fh, 3))) >> 8;
+                break;
+            case 16:
+                $amplitude = current(unpack('v', fread($fh, 2)));
+                break;
+            case 8:
+                $amplitude = current(unpack('C', fread($fh, 1)));
+                break;
+            default:
+                throw new \RuntimeException("Size unsupported");
+        }
+
+        $channel->setAmplitude(ftell($fh), $amplitude);
     }
 
     /**
