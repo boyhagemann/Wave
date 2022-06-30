@@ -8,7 +8,7 @@ namespace BoyHagemann\Wave;
  *
  * @author boyhagemann
  */
-class Wave 
+class Wave
 {
     /**
      * The path to the wave file
@@ -16,7 +16,7 @@ class Wave
      * @var string $filename
      */
     protected $filename;
-    
+
     /**
      * This is the total size in bytes of the wave file
      *
@@ -37,7 +37,7 @@ class Wave
      * @var Stream $fileHandler
      */
     protected $fileHandler;
-    
+
     /**
      * The number of steps to skip bytes.
      *
@@ -47,59 +47,59 @@ class Wave
 
     /**
      * Get the path to the wave file
-     * 
+     *
      * @return string
      */
-    public function getFilename() 
+    public function getFilename()
     {
         return $this->filename;
     }
 
     /**
      * Set the path to the wave file
-     * 
+     *
      * @param string $filename
      * @return Wave
      */
-    public function setFilename($filename) 
+    public function setFilename($filename)
     {
         $this->filename = $filename;
-        
+
         // Read the file, get the chunks
         $this->read();
-        
+
         return $this;
     }
 
     /**
      * Get the detected chunks in the wave file
-     * 
+     *
      * @return array
      */
-    public function getChunks() 
+    public function getChunks()
     {
         return $this->chunks;
     }
 
     /**
      * Set the chunk parts
-     * 
+     *
      * @param array $chunks
-     * @return \BoyhagemannWave\Wave
+     * @return $this
      */
-    public function setChunks(Array $chunks) 
+    public function setChunks(Array $chunks)
     {
         $this->chunks = $chunks;
         return $this;
     }
 
     /**
-     * Get the file handler that is used to read the bytes 
+     * Get the file handler that is used to read the bytes
      * in the wave file
-     * 
-     * @return Stream
+     *
+     * @return resource
      */
-    public function getFileHandler() 
+    public function getFileHandler()
     {
         if(!$this->fileHandler) {
             $this->fileHandler = fopen($this->getFilename(), 'r');
@@ -110,11 +110,11 @@ class Wave
 
     /**
      * Set the file handler to read the wave file byte data
-     * 
-     * @param \BoyhagemannWave\Stream $fileHandler
-     * @return \BoyhagemannWave\Wave
+     *
+     * @param resource $fileHandler
+     * @return $this
      */
-    public function setFileHandler(Stream $fileHandler) 
+    public function setFileHandler($fileHandler)
     {
         $this->fileHandler = $fileHandler;
         return $this;
@@ -122,30 +122,30 @@ class Wave
 
     /**
      * Get the number of steps for skipping when analyzing wave data
-     * 
+     *
      * @return integer
      */
-    public function getSteps() 
+    public function getSteps()
     {
         return $this->steps;
     }
 
     /**
      * Set the number of steps for skipping bytes when analyzing wave data
-     * 
+     *
      * The higher the number, the more byte packages are skipped. This result
      * in a faster analyses, but makes the analyzed data less accurate.
-     * 
+     *
      * The lower the number, the more detailed the analyses is. This can
      * exceed maximum execution time, so be careful not to set the number
      * of steps too small.
-     * 
+     *
      * The default number of steps is 100
-     * 
+     *
      * @param integer $steps
-     * @return \BoyhagemannWave\Wave
+     * @return $this
      */
-    public function setSteps($steps) 
+    public function setSteps($steps)
     {
         $this->steps = $steps;
         return $this;
@@ -153,10 +153,10 @@ class Wave
 
     /**
      * Get the total size of the wave file in number of bytes
-     * 
+     *
      * @return integer
      */
-    public function getSize() 
+    public function getSize()
     {
         return $this->size;
     }
@@ -164,7 +164,7 @@ class Wave
     /**
      * Read the wave file and detect the chunks. After this, the chunks are
      * ready to be analyzed to get the metadata en wave data
-     * 
+     *
      * @throws Exception
      * @return Wave
      */
@@ -190,63 +190,63 @@ class Wave
         $this->readChunks();
 
         return $this;
-     }
-
-    /**
-     * Read a single chunk and get its name and size.
-     * 
-     * It creates a chunk object and adds it to the list of detected chunks.
-     * 
-     */
-    protected function readChunks()
-    {         
-       $fh = $this->getFileHandler();        
-
-       $name = fread($fh, 4);
-       $size = current(unpack('V', fread($fh, 4))); 
-       $position = ftell($fh);
-
-       fseek($fh, $position + $size);
-
-       switch(strtolower($name)) {
-
-           case Chunk\Fmt::NAME:
-               $chunk = new Chunk\Fmt;
-               break;
-
-           case Chunk\Data::NAME:
-               $chunk = new Chunk\Data;
-               break;
-
-           default:
-               $chunk = new Chunk\Other();
-               $chunk->setName($name);
-       }        
-
-       // Check if there is a chunk detected
-       if($chunk) {
-        $chunk->setSize($size);
-        $chunk->setPosition($position);
-        $this->setChunk($chunk);
-       }
-       
-       // If the data chunk is found, then stop reading other (useless) chunks
-       if(!$chunk instanceof Chunk\Data) {
-           $this->readChunks();
-       }
     }
 
     /**
-     * Get the metadata from detected 'fmt' chunk. It contains information 
+     * Read a single chunk and get its name and size.
+     *
+     * It creates a chunk object and adds it to the list of detected chunks.
+     *
+     */
+    protected function readChunks()
+    {
+        $fh = $this->getFileHandler();
+
+        $name = fread($fh, 4);
+        $size = current(unpack('V', fread($fh, 4)));
+        $position = ftell($fh);
+
+        fseek($fh, $position + $size);
+
+        switch(strtolower($name)) {
+
+            case Chunk\Fmt::NAME:
+                $chunk = new Chunk\Fmt;
+                break;
+
+            case Chunk\Data::NAME:
+                $chunk = new Chunk\Data;
+                break;
+
+            default:
+                $chunk = new Chunk\Other();
+                $chunk->setName($name);
+        }
+
+        // Check if there is a chunk detected
+        if($chunk) {
+            $chunk->setSize($size);
+            $chunk->setPosition($position);
+            $this->setChunk($chunk);
+        }
+
+        // If the data chunk is found, then stop reading other (useless) chunks
+        if(!$chunk instanceof Chunk\Data) {
+            $this->readChunks();
+        }
+    }
+
+    /**
+     * Get the metadata from detected 'fmt' chunk. It contains information
      * about:
      * - sample rate
      * - number of channels
      * - bits per sample
      * etc.
-     * 
+     *
      * The metadata is set to a fixed order. The higher the size of the
      * metadata chunk, the more information is registered.
-     * 
+     *
      */
     protected function analyzeMetadata()
     {
@@ -255,16 +255,16 @@ class Wave
         $position   = $chunk->getPosition();
         $fh         = $this->getFileHandler();
 
-        fseek($fh, $position);                
+        fseek($fh, $position);
 
         if ($size >= 2) {
             $format = current(unpack('v', fread($fh, 2)));
             $chunk->setFormat($format);
-        }                
+        }
         if ($size >= 4) {
             $channels = current(unpack('v', fread($fh, 2)));
             $chunk->setChannels($channels);
-        }                
+        }
         if ($size >= 8) {
             $sampleRate = current(unpack('V', fread($fh, 4)));
             $chunk->setSampleRate($sampleRate);
@@ -294,10 +294,10 @@ class Wave
 
     /**
      * Get the amplitude data from the data chunk.
-     * 
+     *
      * For speed optimalisation, skip some blocks. The number of skips is
      * based on the step size.
-     * 
+     *
      * @uses Chunk\Data
      */
     protected function analyzeData()
@@ -306,7 +306,7 @@ class Wave
         $position           = $chunk->getPosition();
         $size               = $chunk->getSize();
         $numberOfChannels   = $this->getMetadata()->getChannels();
-        $channels           = $this->createChannels($numberOfChannels);                
+        $channels           = $this->createChannels($numberOfChannels);
         $steps              = $this->getSteps();
         $blockSize          = $this->getMetadata()->getBlockSize();
         $skips              = $steps * $numberOfChannels * 2;
@@ -318,7 +318,7 @@ class Wave
 
             foreach($channels as $channel) {
                 $this->readData($channel);
-            }    
+            }
 
             fseek($fh, $skips, SEEK_CUR);
         }
@@ -328,10 +328,10 @@ class Wave
 
     /**
      * Create a channel object based on the number of channels of the
-     * wave file. 
-     * 
+     * wave file.
+     *
      * Returns an array containing the channel objects.
-     * 
+     *
      * @param integer $numberOfChannels
      * @uses Channel
      * @return array
@@ -347,7 +347,7 @@ class Wave
 
     /**
      * Get the amplitude of a single channel and a single data block
-     * 
+     *
      * @param \BoyhagemannWave\Channel $channel
      */
     protected function readData(Channel $channel)
@@ -359,7 +359,7 @@ class Wave
 
     /**
      * Add a chunk object
-     * 
+     *
      * @param Chunk\ChunkInterface $chunk
      */
     public function setChunk(Chunk\ChunkInterface $chunk)
@@ -369,7 +369,7 @@ class Wave
 
     /**
      * Get the chunk object if it exists.
-     * 
+     *
      * @throws Exception
      * @return Chunk\ChunkInterface
      */
@@ -384,9 +384,9 @@ class Wave
 
     /**
      * Get the wave data chunk object
-     * 
+     *
      * This method triggers the analyzing of the chunk.
-     * 
+     *
      * @return Chunk\Data
      */
     public function getWaveformData()
@@ -394,17 +394,17 @@ class Wave
         $this->analyzeData();
         return $this->getChunk(Chunk\Data::NAME);
     }
-    
+
     /**
      * Get the metadata (fmt) chunk
-     * 
+     *
      * This method triggers the analyzing of the chunk.
-     * 
+     *
      * @return Chunk\Fmt
      */
     public function getMetadata()
     {
-       $this->analyzeMetadata();
-       return $this->getChunk(Chunk\Fmt::NAME);
+        $this->analyzeMetadata();
+        return $this->getChunk(Chunk\Fmt::NAME);
     }
 }
